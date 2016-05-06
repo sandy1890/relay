@@ -7,11 +7,11 @@ permalink: docs/guides-mutations.html
 next: guides-network-layer
 ---
 
-Up until this point we have only interacted with the GraphQL endpoint to perform queries that fetch data. In this guide, you will learn how to use Relay to perform mutations – operations that consist of writes to the data store followed by a fetch of any changed fields.
+到目前为卡，我们只介绍了如使使用GraphQL终端去处理数据获取的查询部分。这篇指南里，你将学会如何使用Relay进行mutations(变化) – 由数据字段变化引起的一组写入至存储区的操作
 
-## A complete example
+## 完整的例子
 
-Before taking a deep dive into the mutations API, let's look at a complete example. Here, we subclass `Relay.Mutation` to create a custom mutation that we can use to like a story.
+在突然转向mutations API之前，让我们先来看一个完整的例子。下面，我们从`Relay.Mutation`　扩展一个子类来创建一个可以像stroy一样使用的mutation。
 
 ```
 class LikeStoryMutation extends Relay.Mutation {
@@ -74,7 +74,7 @@ class LikeStoryMutation extends Relay.Mutation {
 }
 ```
 
-Here's an example of this mutation in use by a `LikeButton` component:
+以下是一个在 `LikeButton` 组件上使用这个 mutation的例子：
 
 ```
 class LikeButton extends React.Component {
@@ -109,11 +109,11 @@ module.exports = Relay.createContainer(LikeButton, {
 });
 ```
 
-In this particular example, the only field that the `LikeButton` cares about is `viewerDoesLike`. That field will form part of the tracked query that Relay will intersect with the fat query of `LikeStoryMutation` to determine what fields to request as part of the server's response payload for the mutation. Another component elsewhere in the application might be interested in the likers count, or the like sentence. Since those fields will automatically be added to Relay's tracked query, the `LikeButton` need not worry about requesting them explicitly.
+在这个详细的例子里，`LikeButton` 组件唯一关注的字段是　`viewerDoesLike`。Relay会比较高级查询`LikeStoryMutation`后决定哪些字段会包含在服务器返回值中成为mutation返回值。这个字段值来自于这个返回值。应用里其它地方的组件或许也对点赞数或占赞内容感兴趣。因为这些字段会自动添加到Relay的追踪查询里，`LikeButton`并不需要明确的要求它们。
 
-## Mutation props
+## Mutation属性
 
-Any props that we pass to the constructor of a mutation will become available to its instance methods as `this.props`. Like in components used within Relay containers, props for which a corresponding fragment has been defined will be populated by Relay with query data:
+所有我们在构建时传递给mutation的属性都可以通过实例的`this.props`变为可用的方法。像组件里使用Relay容器一样，对于匹配的已经定义fragment的属性将被　Relay使用查询数据填充。
 
 ```
 class LikeStoryMutation extends Relay.Mutation {
@@ -136,9 +136,9 @@ class LikeStoryMutation extends Relay.Mutation {
 }
 ```
 
-## Fragment variables
+## Fragment变量
 
-Like it can be done with [Relay containers](guides-containers.html), we can prepare variables for use by our mutation's fragment builders, based on the previous variables and the runtime environment.
+像在容器里一样[Relay容器](guides-containers.html),我们可以基于之前的变量和运行时环境，通过mutaions的fragment构建器准备一些可用的变量。　
 
 ```
 class RentMovieMutation extends Relay.Mutation {
@@ -170,16 +170,16 @@ class RentMovieMutation extends Relay.Mutation {
 }
 ```
 
-## The fat query
+## 高级查询
 
-Changing one thing in a system can have a ripple effect that causes other things to change in turn. Imagine a mutation that we can use to accept a friend request. This can have wide implications:
+在系统里修改某个东西，会引发其它部分按顺序变化的连锁效应。试想一个我们用来接受朋友添加请求的mutaion。这会产生巨大的影响：
 
-- both people's friend count will increment
-- an edge representing the new friend will be added to the viewer's `friends` connection
-- an edge representing the viewer will be added to the new friend's `friends` connection
-- the viewer's friendship status with the requester will change
+- 每个人的朋友总数都会增加
+- 一方面访问者的朋友列表会增加一个新朋友
+- 另一方面访问者本身也会被加入到被访问者的朋友列表
+- 访问者的朋友关系状态会变化
 
-Design a fat query that covers every possible field that could change:
+设计一个高级查询来包含所有可能变化的字段：
 
 ```
 class AcceptFriendRequestMutation extends Relay.Mutation {
@@ -203,27 +203,27 @@ class AcceptFriendRequestMutation extends Relay.Mutation {
 }
 ```
 
-This fat query looks like any other GraphQL query, with one important distinction. We know some of these fields to be non-scalar (like `friendEdge` and `friends`) but notice that we have not named any of their children by way of a subquery. In this way, we indicate to Relay that *anything* under those non-scalar fields may change as a result of this mutation.
+除了一个重要的区别，高级查询看起来和其它GraphQL查询一样。我们知道有些字段是混合型的，（比如 `friendEdge` 和 `friends`) ，但我们并没有通过任何子查询来命名它们的子元素。在这里，我们实际上是告诉Relay，所有这些混合型的字段会作为当前mutations的结果发生变化。
 
-> Note
+> 注意
 >
-> When designing a fat query, consider *all* of the data that might change as a result of the mutation – not just the data currently in use by your application. We don't need to worry about overfetching; this query is never executed without first intersecting it with a ‘tracked query’ of the data our application actually needs. If we omit fields in the fat query, we might observe data inconsistencies in the future when we add views with new data dependencies, or add new data dependencies to existing views.
+> 当设计一个高级查询的时候, 考虑所有可能因为mutation而发生变化的数据 – 而不仅仅是你的应用当前正在使用的数据。我不需要担心获取过多数据；如果我们的应用没有通过‘跟踪查询（tracked query）’在实际需要的时候请求过它，这些查询并不会被执行。如果我们在高级查询中省略了这些字段，将来，当我们用新的数据依赖添加新视图或者为已经存在的视图增加新的数据依赖时，我们可能会发现到一些数据错误。
 
-## Mutator configuration
+## Mutator配置
 
-We need to give Relay instructions on how to use the response payload from each mutation to update the client-side store. We do this by configuring the mutation with one or more of the following mutation types:
+我们需要向Relay说明如何使用从每一个mutaion响应数据去更新客户端的数据存储。我们可能通过使用以下的一个或多个mutation类型来配置mutaion实现：
 
 ### `FIELDS_CHANGE`
 
-Any field in the payload that can be correlated by DataID with one or more records in the client-side store will be merged with the record(s) in the store.
+返回数据的所有字段都将通过DataID关联客户端store中的数据，使用新的返回值同客户端数据进行合并。
 
-#### Arguments
+#### 参数
 
 - `fieldIDs: {[fieldName: string]: DataID | Array<DataID>}`
 
-  A map between a `fieldName` in the response and one or more DataIDs in the store.
+  返回数据中的fieldName和store中一个或多个DataIDs进行映射的map
 
-#### Example
+#### 示例
 
 ```
 class RenameDocumentMutation extends Relay.Mutation {
@@ -255,27 +255,27 @@ class RenameDocumentMutation extends Relay.Mutation {
 
 ### `NODE_DELETE`
 
-Given a parent, a connection, and one or more DataIDs in the response payload, Relay will remove the node(s) from the connection and delete the associated record(s) from the store.
+在返回数据中指定一个上级，一个连接点和一个或我个DataIDs,Relay会从连接点里删除指定的节点并从store中删除关联的数据。
 
-#### Arguments
+#### 参数
 
 - `parentName: string`
 
-  The field name in the response that represents the parent of the connection
+  返回值中表示连接点上级的字段名
 
 - `parentID: string`
 
-  The DataID of the parent node that contains the connection
+  包含连接点的上级节点的DataID
 
 - `connectionName: string`
 
-  The field name in the response that represents the connection
+  返回数据中表示连接点的字段名
 
 - `deletedIDFieldName: string`
 
-  The field name in the response that contains the DataID of the deleted node
+  返回数据中包含需要被删除的节点DataID的字段
 
-#### Example
+#### 示例
 
 ```
 class DestroyShipMutation extends Relay.Mutation {
@@ -309,31 +309,31 @@ class DestroyShipMutation extends Relay.Mutation {
 
 ### `RANGE_ADD`
 
-Given a parent, a connection, and the name of the newly created edge in the response payload Relay will add the node to the store and attach it to the connection according to the range behavior specified.
+在返回数据中指定一个上级，一个连接点和新创建的修整数据（edge)。　Rellay将把这些节点添加到store中并且根据rangeBehavior指定的规则将节点附加到连接点上。
 
-#### Arguments
+#### 参数
 
 - `parentName: string`
 
-  The field name in the response that represents the parent of the connection
+  返回值中表示连接点上级的字段名
 
 - `parentID: string`
 
-  The DataID of the parent node that contains the connection
+  包含连接点的上级节点的DataID
 
 - `connectionName: string`
 
-  The field name in the response that represents the connection
+  返回数据中表示连接点的字段名
 
 - `edgeName: string`
 
-  The field name in the response that represents the newly created edge
+  返回数据中表示最新创建的修整数据（edge）的字段名
 
 - `rangeBehaviors: {[call: string]: GraphQLMutatorConstants.RANGE_OPERATIONS} | (connectionArgs: {[argName: string]: string}) => $Enum<GraphQLMutatorConstants.RANGE_OPERATIONS>`
 
   A map between printed, dot-separated GraphQL calls *in alphabetical order* and the behavior we want Relay to exhibit when adding the new edge to connections under the influence of those calls or a function accepting an array of connection arguments, returning that behavior.
 
-For example, `rangeBehaviors` could be written this way:
+比如, `rangeBehaviors` 可以用以下这种方式编写:
 
 ```
 const rangeBehaviors = {
@@ -345,7 +345,7 @@ const rangeBehaviors = {
 };
 ```
 
-Or this way, with the same results:
+或者用以下的方法编写和上面同样的规则：
 
 ```
 const rangeBehaviors = ({orderby}) => {
@@ -358,9 +358,9 @@ const rangeBehaviors = ({orderby}) => {
 
 ```
 
-Behaviors can be one of `'append'`, `'ignore'`, `'prepend'`, `'refetch'`, or `'remove'`.
+Behaviors可以是 `'append'`, `'ignore'`, `'prepend'`, `'refetch'`, 或 `'remove'`　其中一个值。
 
-#### Example
+#### 示例
 
 ```
 class IntroduceShipMutation extends Relay.Mutation {
@@ -401,32 +401,31 @@ class IntroduceShipMutation extends Relay.Mutation {
 
 ### `RANGE_DELETE`
 
-Given a parent, a connection, one or more DataIDs in the response payload, and a path between the parent and the connection, Relay will remove the node(s) from the connection but leave the associated record(s) in the store.
+在返回数据中指定一个上级, 一个连接点, 一个或多个DataIDs和在上级与连接点之间的路径，Relay会从连接点中删除节点但是保留store中关联的数据
 
-#### Arguments
+#### 参数
 
 - `parentName: string`
 
-  The field name in the response that represents the parent of the connection
+  返回值中表示连接点上级的字段名
 
 - `parentID: string`
 
-  The DataID of the parent node that contains the connection
+  包含连接点的上级节点的DataID
 
 - `connectionName: string`
 
-  The field name in the response that represents the connection
+  返回数据中表示连接点的字段名
 
 - `deletedIDFieldName: string | Array<string>`
 
-  The field name in the response that contains the DataID of the removed node, or the path to the node removed from the connection
+　返回数据中包含将要移除节点的DataID或是将从连接点中删除的节点路径
 
 - `pathToConnection: Array<string>`
 
-  Any array containing the field names between the parent and the connection, including the parent and the connection
+  包含上级和连接点之间字段名的数组，含上级和连接点
 
-
-#### Example
+#### 示例
 
 ```
 class RemoveTagMutation extends Relay.Mutation {
@@ -460,9 +459,9 @@ class RemoveTagMutation extends Relay.Mutation {
 
 ### `REQUIRED_CHILDREN`
 
-A `REQUIRED_CHILDREN` config is used to append additional children to the mutation query. You may need to use this, for example, to fetch fields on a new object created by the mutation (and which Relay would normally not attempt to fetch because it has not previously fetched anything for that object).
+`REQUIRED_CHILDREN` 配置用于附加额外的下级到mutation查询。 比如，用于当通过mutation创建新对象的时候获取字段（因为在这之初胼没有为这个对象获取任何数据，Relay通常不会尝试获取字段）。
 
-Data fetched as a result of a `REQUIRED_CHILDREN` config is not written into the client store, but you can add code that processes it in the `onSuccess` callback that you pass into `commitUpdate()`:
+`REQUIRED_CHILDREN`　获取的数据不会写入到客户端store，但是你可以在使用`commitUpdate()`时在`onSuccess`回调中添加代码处理这些数据:
 
 ```
 Relay.Store.commitUpdate(
@@ -475,11 +474,11 @@ Relay.Store.commitUpdate(
 );
 ```
 
-#### Arguments
+#### 参数
 
 - `children: Array<RelayQuery.Node>`
 
-#### Example
+#### 示例
 
 ```
 class CreateCouponMutation extends Relay.Mutation<Props> {
@@ -521,11 +520,11 @@ class CreateCouponMutation extends Relay.Mutation<Props> {
 }
 ```
 
-## Optimistic updates
+## 乐观更新
 
-All of the mutations we've performed so far have waited on a response from the server before updating the client-side store. Relay offers us a chance to craft an optimistic response of the same shape based on what we expect the server's response to be in the event of a successful mutation.
+所有我们目前展示的mutaion在更新客户端store之前都需要等待服务端返回。Relay提供给我们一种机制，可以在获取服务器返回之前乐观的返回一个我们期待在mutation成功执行后服务才会返回的数据。
 
-Let's craft an optimistic response for the `LikeStoryMutation` example above:
+下面让我们来为 `LikeStoryMutation` 创建一个乐观更新的例子：
 
 ```
 class LikeStoryMutation extends Relay.Mutation {
@@ -573,4 +572,4 @@ class LikeStoryMutation extends Relay.Mutation {
 }
 ```
 
-You don't have to mimic the entire response payload. Here, we've punted on the like sentence, since it's difficult to localize on the client side. When the server responds, Relay will treat its payload as the source of truth, but in the meantime, the optimistic response will be applied right away, allowing the people who use our product to enjoy instant feedback after having taken an action.
+你并不需要模拟所有的返回值。这个示例中，我们仅处理了点赞语句。当服务端返回值时，Relay会使用真实的返回值作为实际的数据来源，在这之前，乐观的返回值会被正确处理，允许使用我们产品的人在执行操作后获得更好的即时反馈。

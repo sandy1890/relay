@@ -7,60 +7,59 @@ permalink: docs/guides-ready-state.html
 next: guides-mutations
 ---
 
-Whenever Relay is fulfilling data requirements, it can be useful to know when certain events occur. For example, we might want to record how long it takes for data to be available, or we might want to log errors to the server. These events are available on most Relay APIs via the `onReadyStateChange` callback.
+当Relay获取数据的时候，了解具体正在发生的事情会对我们有用。例如，我们想记录获取数据使用了多少时间，或者是记录错误信息到服务器。这些事件在大多数的Relay API上通过　｀onReadyStateChange｀回调提供。
 
 ## `onReadyStateChange`
 
-When Relay fulfills data, the `onReadyStateChange` callback is called one or more times with an object that describes the current "ready state". This object has the following properties:
+当Relay获取数据时，`onReadyStateChange`　回调函数会被调用一次或多次。调用时会带一个描述当前正处于什么状态的对象参数。这个对象包含以下一些属性：
 
 - `ready: boolean`
 
-  This is true when the subset of data required for rendering is ready.
+  当渲染需要的数据子集准备好时，ready为true
 
 - `done: boolean`
 
-  This is true when _all_ data requirements are ready for rendering.
+  当渲染需要的所有数据准备好时，done为true
 
 - `error: ?Error`
 
-  This is an instance of `Error` if there is a failure. Otherwise, this is
-  `null`.
+　当有错误发生时，该值为一个 `Error`实例。其它情况下该值为 `null`
 
 - `stale: boolean`
 
-  When "force fetching", this is true if `ready` is true as a result of data being available on the client before the server request has completed.
+  当强制请求数据时，如果在发起服务端请求之前，客户端已经拥有数据，`ready`已经为true的情况下，该值为true。
 
 - `aborted: boolean`
 
-  Whether the request was aborted.
+  当请求被取消时，该值为true。
 
-## Examples
+## 例子
 
-### Fetching Data from the Server
+### 从服务器获取数据
 
-If insufficient data on the client leads Relay to send a server request for more data, we can expect the following behavior:
+如果客户端数据不满足需求导致发起服务端请求获取更多数据，以下状态会发生:
 
-1. Once with `ready` set to false.
-2. Once with `ready` and `done` set to true.
+1. 一次`ready`被设置为false。
+2. 一次`ready` 和 `done` 设置为true。
 
-### Resolving Data from the Client
+### 从客户端恢复数据
 
-If sufficient data is available on the client such that Relay does not need to send a server request, we can expect the following behavior:
+如果客户端已经拥有足够的数据，则Relay不需要发送服务端请求，以下状态会发生：
 
-1. Once with `ready` and `done` set to true.
+1. 一次 `ready` 和 `done` 设置为true.
 
-### Server Error
+### 服务端服务
 
-If a server request results in a failure to load data, we can expect the following behavior:
+如果服务器请求结果是加载数据错误，以下状态会发生:
 
-1. Once with `ready` set to false.
-2. Once with `error` set to an `Error` object.
+1.一次`ready`设置为false
+2.一次`error`设置为`Error`对象
 
-Note that `ready` and `done` will continue to be false.
+需要注意的是 `ready` 和 `done`　仍然为false。
 
-### Force Fetching with Data from the Client
+### 有客户端数据的强制请求
 
-If a "force fetch" occurs and there is insufficient data on the client, the same behavior as **Fetching Data from the Server** can be expected. However, if a "force fetch" occurs and there _is_ sufficient data on the client to render, we can expect the following behavior:
+当发生强制请求并且客户端已经拥有足够数据的时候，会发生同 **从服务器获取数据**　一样的行为。而且，如果一次强制请求发生时客户端已经拥有足够的渲染数据，以下状态会发生：
 
-1. Once with `ready`, `done`, and `stale` set to true.
-2. Once with `ready` and `done` set to true, but `stale` set to false.
+1. 一次 `ready`, `done`, 和 `stale` 设置为 true。
+2. 一次 `ready` 和 `done` 设置为true, 但 `stale` 设置为false。

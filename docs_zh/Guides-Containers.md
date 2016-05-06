@@ -44,10 +44,9 @@ class ProfilePicture extends React.Component {
 }
 ```
 
-### Data Dependencies With GraphQL
+### 使用GraphQL数据依赖
 
 在Relay中，数据依赖使用[GraphQL](https://github.com/facebook/graphql)来进行描述。对于`<ProfilePicture>`组件,它的数据依赖可以用下面的方式表示。注意这个描述与组件本身期望的 `user`　属性结构完全匹配。
-
 
 ```
 Relay.QL`
